@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <!-- Member dashboard. Made by: Tanvir Hossain Bhuiyan -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Member dashboard of FitHub Gym">
+  <title>Member || FitHub Gym</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <header class="header">
+    <a href="index.html" class="logo">Fit<span>Hub</span></a>
+    <div class="user-info">
+      <span class="badge green">Member</span>
+      <span>Welcome, Tanvir Hossain Bhuiyan (M-001)</span>
+      <a href="index.html" class="btn btn-small btn-light">Logout</a>
+    </div>
+  </header>
+
+  <nav class="topnav">
+      <button type="button" id="nav-progressSection" onclick="showSection('progressSection')">Progress Log</button>
+      <button type="button" id="nav-bmiSection" onclick="showSection('bmiSection')">BMI Calculator</button>
+      <button type="button" id="nav-membershipSection" onclick="showSection('membershipSection')">Membership &amp; Payment</button>
+      <button type="button" id="nav-goalSection" onclick="showSection('goalSection')">Goal Tracker</button>
+      <button type="button" id="nav-myPlanSection" onclick="showSection('myPlanSection')">My Diet, Workouts &amp; Visits</button>
+  </nav>
+
+  <main class="container">
+
+      <!-- Progress log: create, read, update, delete and search -->
+      <section id="progressSection" class="page-section">
+        <h2 class="page-title">My Progress Log</h2>
+        <p class="page-subtitle">Write down your weight and workout after each visit. Your latest weight updates the summary,
+          the BMI and the goal tracker, and your trainer and nutritionist see it too.</p>
+
+        <!-- Summary: one number from each part of the dashboard -->
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-number" id="sumWeight">0</div><div class="stat-label">Latest weight (kg)</div></div>
+          <div class="stat-card"><div class="stat-number" id="sumBmi">0</div><div class="stat-label" id="sumBmiLabel">BMI</div></div>
+          <div class="stat-card"><div class="stat-number" id="sumDays">0</div><div class="stat-label">Membership days left</div></div>
+          <div class="stat-card"><div class="stat-number" id="sumVisits">0</div><div class="stat-label">Visits this month</div></div>
+          <div class="stat-card"><div class="stat-number" id="sumGoal">0%</div><div class="stat-label">Weight goal done</div></div>
+        </div>
+
+        <div id="logMessage" class="message"></div>
+
+        <div class="row">
+          <div class="col">
+            <div class="card">
+              <h3 id="logFormTitle">New Entry</h3>
+              <form id="logForm" onsubmit="return saveLog()">
+                <table class="form-table">
+                  <tr>
+                    <td><label for="logDate">Date:</label></td>
+                    <td><input type="date" id="logDate">
+                        <span class="error" id="logDateError"></span></td>
+                  </tr>
+                  <tr>
+                    <td><label for="logWeight">Weight (kg):</label></td>
+                    <td><input type="number" id="logWeight" min="25" max="250" placeholder="25 - 250">
+                        <span class="error" id="logWeightError"></span></td>
+                  </tr>
+                  <tr>
+                    <td><label for="logFat">Body fat % (optional):</label></td>
+                    <td><input type="number" id="logFat" min="3" max="60" placeholder="3 - 60">
+                        <span class="error" id="logFatError"></span></td>
+                  </tr>
+                  <tr>
+                    <td><label for="logWorkout">Workout done:</label></td>
+                    <td>
+                      <select id="logWorkout">
+                        <option value="">-- Select --</option>
+                        <option value="Cardio">Cardio</option>
+                        <option value="Strength">Strength</option>
+                        <option value="Yoga">Yoga</option>
+                        <option value="HIIT">HIIT</option>
+                        <option value="Rest day">Rest day</option>
+                      </select>
+                      <span class="error" id="logWorkoutError"></span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><label for="logNotes">Notes:</label></td>
+                    <td><textarea id="logNotes" placeholder="How did it feel? (optional)"></textarea></td>
+                  </tr>
+                </table>
+                <input type="submit" id="logSaveButton" class="btn" value="Save Entry">
+                <input type="reset" class="btn btn-secondary" value="Cancel" onclick="resetLogForm()">
+              </form>
+            </div>
+          </div>
+
+          <div class="col-wide">
+            <div class="card">
+              <h3>My entries</h3>
+              <div class="search-bar">
+                <input type="text" id="logSearch" placeholder="Search by date, workout or notes..." onkeyup="renderLogs()">
+                <select id="logWorkoutFilter" onchange="renderLogs()">
+                  <option value="All">All workouts</option>
+                  <option value="Cardio">Cardio</option>
+                  <option value="Strength">Strength</option>
+                  <option value="Yoga">Yoga</option>
+                  <option value="HIIT">HIIT</option>
+                  <option value="Rest day">Rest day</option>
+                </select>
+              </div>
+              <p class="result-count" id="logCount"></p>
+              <div class="table-wrapper">
+                <table class="data-table">
+                  <thead>
+                    <tr><th>Date</th><th>Weight</th><th>Body fat</th><th>Workout</th><th>Notes</th><th>Actions</th></tr>
+                  </thead>
+                  <tbody id="logTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- Unique feature 1: BMI calculator -->
+      <section id="bmiSection" class="page-section">
+        <h2 class="page-title">BMI Calculator</h2>
+        <p class="page-subtitle">Body Mass Index = weight (kg) / height (m) x height (m). Filled in from your sign-up height and
+          the latest weight in your progress log; you can also try other numbers.</p>
+
+        <div class="row">
+          <div class="col">
+            <div class="card">
+              <form onsubmit="return calculateBMI()">
+                <table class="form-table">
+                  <tr>
+                    <td><label for="bmiHeight">Height (cm):</label></td>
+                    <td><input type="number" id="bmiHeight" min="100" max="230">
+                        <span class="error" id="bmiHeightError"></span></td>
+                  </tr>
+                  <tr>
+                    <td><label for="bmiWeight">Weight (kg):</label></td>
+                    <td><input type="number" id="bmiWeight" min="25" max="250">
+                        <span class="error" id="bmiWeightError"></span></td>
+                  </tr>
+                </table>
+                <input type="submit" class="btn" value="Calculate BMI">
+              </form>
+            </div>
+          </div>
+          <div class="col">
+            <div class="result-box" id="bmiResult">
+              <p>Your BMI:</p>
+              <p class="big" id="bmiNumber"></p>
+              <p><span class="badge" id="bmiCategory"></span></p>
+              <p id="bmiAdvice"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- Unique feature 2: membership status + fee payment -->
+      <section id="membershipSection" class="page-section">
+        <h2 class="page-title">Membership &amp; Payment</h2>
+        <p class="page-subtitle">See how many days are left and pay your fee with bKash or Nagad.</p>
+
+        <div class="row">
+          <div class="col">
+            <div class="status-card" id="statusCard">
+              <h3>My membership</h3>
+              <p class="big" id="daysLeft"></p>
+              <p id="statusText"></p>
+            </div>
+          </div>
+          <div class="col">
+            <div class="card">
+              <h3 id="payFormTitle">Pay Membership Fee</h3>
+              <div id="payMessage" class="message"></div>
+              <form id="payForm" onsubmit="return submitPayment()">
+                <table class="form-table">
+                  <tr>
+                    <td><label for="payPlan">Plan:</label></td>
+                    <td><select id="payPlan" onchange="showPlanPrice()"></select>
+                        <span class="error" id="payPlanError"></span></td>
+                  </tr>
+                  <tr>
+                    <td>Method:</td>
+                    <td>
+                      <input type="radio" id="payBkash" name="payMethod" value="bKash">
+                      <label for="payBkash" class="option-label">bKash</label>
+                      <input type="radio" id="payNagad" name="payMethod" value="Nagad">
+                      <label for="payNagad" class="option-label">Nagad</label>
+                      <span class="error" id="payMethodError"></span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><label for="payTrx">Transaction ID:</label></td>
+                    <td><input type="text" id="payTrx" placeholder="10 letters/digits, e.g. 9KD2X7LQ1A">
+                        <span class="error" id="payTrxError"></span></td>
+                  </tr>
+                  <tr>
+                    <td><label for="payAmount">Amount (BDT):</label></td>
+                    <td><input type="number" id="payAmount" placeholder="Must equal the plan price">
+                        <span class="hint" id="planPriceHint"></span>
+                        <span class="error" id="payAmountError"></span></td>
+                  </tr>
+                </table>
+                <input type="submit" id="paySaveButton" class="btn" value="Submit Payment">
+                <input type="reset" class="btn btn-secondary" value="Cancel" onclick="resetPayForm()">
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>My payments</h3>
+          <p class="hint">Only Pending payments can be edited or cancelled. The admin verifies them.</p>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr><th>ID</th><th>Plan</th><th>Amount</th><th>Method</th><th>Trx ID</th><th>Date</th><th>Status</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="payTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- Unique feature 3: fitness goal tracker -->
+      <section id="goalSection" class="page-section">
+        <h2 class="page-title">Fitness Goal Tracker</h2>
+        <p class="page-subtitle">Your progress from the first to the latest weight in your progress log, towards your target.
+          Add small weekly goals too.</p>
+
+        <div class="row">
+          <div class="col">
+            <div class="card">
+              <h3>Target weight</h3>
+              <label for="targetWeight">Target (kg):</label>
+              <input type="number" id="targetWeight" min="25" max="250">
+              <span class="error" id="targetWeightError"></span>
+              <button type="button" class="btn" onclick="updateGoalProgress()">Update</button>
+              <p id="goalText"></p>
+              <div class="bar-track"><div class="bar-fill" id="goalBar"></div></div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="card">
+              <h3>This week's mini-goals</h3>
+              <input type="text" id="miniGoal" placeholder="e.g. Drink 3 litres of water daily">
+              <span class="error" id="miniGoalError"></span>
+              <button type="button" class="btn" onclick="addMiniGoal()">Add</button>
+              <button type="button" class="btn btn-secondary" onclick="removeLastGoal()">Remove last</button>
+              <ul class="goal-list" id="goalList"></ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+
+      <!--
+   MY DIET & WORKOUTS (read only)
+   Shows what the Nutritionist and the Trainer planned for me.
+-->
+      <section id="myPlanSection" class="page-section">
+        <h2 class="page-title">My Diet, Workouts &amp; Visits</h2>
+        <p class="page-subtitle">Made for you by your nutritionist and your trainer: diet, meals, workouts, classes, and your visits recorded at the front desk.</p>
+
+        <div class="card">
+          <h3>My diet plan</h3>
+          <div id="myDietInfo"></div>
+        </div>
+
+        <div class="meal-grid" id="myMealGrid"></div>
+        <p class="totals" id="myMealTotal"></p>
+
+        <div class="card">
+          <h3>My classes</h3>
+          <p class="hint">Booked for you by your trainer.</p>
+          <ul class="goal-list" id="myClassList"></ul>
+        </div>
+
+        <div class="card">
+          <h3>My gym visits</h3>
+          <p id="visitSummary"></p>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr><th>Date</th><th>Check in</th><th>Check out</th></tr>
+              </thead>
+              <tbody id="myVisitBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>My workouts</h3>
+          <p class="hint" id="todayText"></p>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr><th>Exercise</th><th>Sets x Reps</th><th>Days</th><th>Trainer's notes</th></tr>
+              </thead>
+              <tbody id="myWorkoutBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+  </main>
+
+  <footer class="footer">
+    &copy; 2026 FitHub Gym &middot; CSC 3215 Web Technologies &middot; Group 04
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/member.js"></script>
+</body>
+</html>
